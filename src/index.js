@@ -89,6 +89,9 @@ class Bitswap {
           return cb()
         }
 
+        // new block
+        this.notifications.receivedNewBlock(peerId, block)
+
         this._putBlock(block, cb)
       }
     ], callback)

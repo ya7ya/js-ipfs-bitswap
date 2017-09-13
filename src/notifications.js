@@ -40,6 +40,18 @@ class Notifications extends EventEmitter {
   }
 
   /**
+   * receivedNewBlock - Signal the system we received a fresh block from peer.
+   *
+   * @param  {PeerId} peerId block sender
+   * @param  {Block} block  block Object
+   */
+  receivedNewBlock (peerId, block) {
+    const str = 'receivedNewBlock'
+    this._log(str + ' from ' + peerId.toB58String().slice(0, 8))
+    this.emit(str, peerId, block)
+  }
+
+  /**
    * Signal the system that we are waiting to receive the
    * block associated with the given `cid`.
    *

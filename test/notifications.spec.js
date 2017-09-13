@@ -15,6 +15,7 @@ const makeBlock = require('./utils/make-block')
 describe('Notifications', () => {
   let blocks
   let peerId
+  let remotePeerId
 
   before((done) => {
     parallel([
@@ -25,7 +26,14 @@ describe('Notifications', () => {
       }),
       (cb) => PeerId.create({bits: 1024}, (err, id) => {
         expect(err).to.not.exist()
+        console.log('Peer ID: ', id.toB58String())
         peerId = id
+        cb()
+      }),
+      (cb) => PeerId.create({bits: 1024}, (err, id) => {
+        expect(err).to.not.exist()
+        console.log('remote Peer ID: ', id.toB58String())
+        remotePeerId = id
         cb()
       })
     ], done)
@@ -39,6 +47,17 @@ describe('Notifications', () => {
       done()
     })
     n.hasBlock(b)
+  })
+
+  it('receivedNewBlock', (done) => {
+    const n = new Notifications(peerId)
+    const b = blocks[0]
+    n.once('receivedNewBlock', (peer, block) => {
+      expect(b).to.eql(block)
+      expect(remotePeerId).to.eql(peer)
+      done()
+    })
+    n.receivedNewBlock(remotePeerId, b)
   })
 
   describe('wantBlock', () => {
