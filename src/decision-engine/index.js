@@ -21,7 +21,7 @@ const logger = require('../utils').logger
 const MAX_MESSAGE_SIZE = 512 * 1024
 
 class DecisionEngine {
-  constructor (peerId, blockstore, network, stats) {
+  constructor (peerId, blockstore, network, stats, options) {
     this._log = logger(peerId, 'engine')
     this.blockstore = blockstore
     this.network = network
@@ -34,6 +34,9 @@ class DecisionEngine {
     // List of tasks to be processed
     this._tasks = []
 
+    options = options || {}
+    this._maxMessageSize = options.maxMessageSize || MAX_MESSAGE_SIZE
+
     this._outbox = debounce(this._processTasks.bind(this), 100)
   }
 
@@ -43,7 +46,7 @@ class DecisionEngine {
       return acc + b.data.byteLength
     }, 0)
 
-    if (total < MAX_MESSAGE_SIZE) {
+    if (total < this._maxMessageSize) {
       return this._sendSafeBlocks(peer, blocks, cb)
     }
 
@@ -56,7 +59,7 @@ class DecisionEngine {
       batch.push(b)
       size += b.data.byteLength
 
-      if (size >= MAX_MESSAGE_SIZE ||
+      if (size >= this._maxMessageSize ||
           // need to ensure the last remaining items get sent
           outstanding === 0) {
         size = 0
