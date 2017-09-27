@@ -58,7 +58,7 @@ class Bitswap {
     // local database
     this.blockstore = blockstore
 
-    this.engine = new DecisionEngine(this.peerInfo.id, blockstore, this.network, this._stats)
+    this.engine = new DecisionEngine(this.peerInfo.id, blockstore, this.network, this._stats, this._options)
 
     // handle message sending
     this.wm = new WantManager(this.peerInfo.id, this.network, this._stats)
