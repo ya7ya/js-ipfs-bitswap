@@ -42,6 +42,14 @@ class DecisionEngine {
     }
 
     this._outbox = debounce(this._processTasks.bind(this), 100)
+    this.meterController = (options.meterController) ? options.meterController.bind(this) : this.defaultMeterController.bind(this)
+  }
+
+  defaultMeterController (peer, size, cb) {
+    // callback with true by default.
+    // this function is used as a placeholder for an actual controller.
+    // useful if the user want to add rules on sending.
+    cb(null, true)
   }
 
   _sendBlocks (peer, blocks, cb) {
@@ -76,6 +84,66 @@ class DecisionEngine {
           // not returning the error, so we send as much as we can
           // as otherwise `eachSeries` would cancel
           cb()
+        })
+      } else {
+        cb()
+      }
+    }, cb)
+  }
+
+  _sendMeteredBlocks (peer, blocks, cb) {
+    // split into messges of max 512 * 1024 bytes
+    const total = blocks.reduce((acc, b) => {
+      return acc + b.data.byteLength
+    }, 0)
+
+    if (total < this._maxMessageSize) {
+      // TODO check if user has enough credit to get this batch here...
+      this.meterController(peer, total, (err, proceed) => {
+        if (err) {
+          this._log('meterController Error: %s ', err.message)
+          return
+        }
+        if (proceed) {
+          return this._sendSafeBlocks(peer, blocks, cb)
+        } else {
+          return this._log('peer out of credit %s ', peer.id.toB58String())
+        }
+      })
+    }
+
+    let size = 0
+    let batch = []
+    let outstanding = blocks.length
+
+    eachSeries(blocks, (b, cb) => {
+      outstanding--
+      batch.push(b)
+      size += b.data.byteLength
+
+      if (size >= this._maxMessageSize ||
+          // need to ensure the last remaining items get sent
+          outstanding === 0) {
+        const nextBatch = batch.slice()
+        batch = []
+        // TODO check if user has enough credit to get this batch here...
+        this.meterController(peer, total, (err, proceed) => {
+          if (err) {
+            this._log('meterController Error: %s ', err.message)
+          }
+
+          if (proceed) {
+            this._sendSafeBlocks(peer, nextBatch, (err) => {
+              if (err) {
+                this._log('sendblock error: %s', err.message)
+              }
+              // not returning the error, so we send as much as we can
+              // as otherwise `eachSeries` would cancel
+              cb()
+            })
+          } else {
+            this._log('peer out of credit %s ', peer.id.toB58String())
+          }
         })
       } else {
         cb()
