@@ -181,7 +181,8 @@ class DecisionEngine {
           return find(blocks, (b) => b.cid.equals(cid))
         })
 
-        this._sendBlocks(peer, blockList, (err) => {
+        // this._sendBlocks(peer, blockList, (err) => {
+        this._sendMeteredBlocks(peer, blockList, (err) => {
           if (err) {
             // `_sendBlocks` actually doesn't return any errors
             this._log.error('should never happen: ', err)
