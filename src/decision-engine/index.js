@@ -124,7 +124,7 @@ class DecisionEngine {
           const nextBatch = batch.slice()
           batch = []
           // TODO check if user has enough credit to get this batch here...
-          this.meterController(peer, total, (err, proceed) => {
+          this.meterController(peer, size, (err, proceed) => {
             if (err) {
               this._log('meterController Error: %s ', err.message)
             }
@@ -187,7 +187,8 @@ class DecisionEngine {
           } else {
             blockList.forEach((block) => this.messageSent(peer, block))
           }
-          next()
+          setImmediate(() => { next() })
+          // next()
           // cb()
         })
       })
