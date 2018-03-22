@@ -14,7 +14,7 @@ const logger = require('./utils').logger
 const Stats = require('./stats')
 
 const defaultOptions = {
-  statsEnabled: false,
+  statsEnabled: true,
   statsComputeThrottleTimeout: 1000,
   statsComputeThrottleMaxQueueSize: 1000
 }
